@@ -23,6 +23,8 @@
 #define DPDiaWindowBackgroundTile "_TtC15WindowTreatment24WindowBackgroundBaseView"
 #define DPDiaNewTabPage         "NewTabPage.NewTabPageContentView"
 #define DPDiaShadowView         "_TtC5ARCUI10ShadowView"
+#define DPDiaWindowFrame        "_TtC6Window24PlatformWindowThemeFrame"
+#define DPDiaWindowTint         "_TtC15WindowTreatment31WindowBackgroundOverlayTintView"
 #define DPDiaBrowser            "ArcBrowser"
 #define DPDiaBrowserDelegate    "_TtC3ADK15ChromiumBrowser"
 #define DPDiaTabGroupProperties "ArcTabGroupProperties"
