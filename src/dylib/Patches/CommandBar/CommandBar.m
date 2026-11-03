@@ -712,7 +712,7 @@ static NSView *DPSwitchRow(NSString *title, NSString *key) {
 
 static NSArray<NSView *> *DPCommandBarRows(void) {
     return @[
-        DPSliderRow(@"Room above the bar in macOS center", DPHeightKey, 50, 100, @"%"),
+        DPSliderRow(@"Space above the bar", DPHeightKey, 50, 100, @"%"),
         DPSliderRow(@"Darkness", DPDarknessKey, 80, 100, @"%"),
         DPSliderRow(@"Blur radius", DPBlurRadiusKey, 60, 1, @"pt"),
         DPSwitchRow(@"Blur the sidebar too", DPBlurWindowKey),
@@ -721,7 +721,7 @@ static NSArray<NSView *> *DPCommandBarRows(void) {
 
 static NSMenu *DPCommandBarPositions(void) {
     NSMenu *menu = [[NSMenu alloc] initWithTitle:@"Position"];
-    for (NSArray *item in @[ @[ @"macOS center", @"macos" ], @[ @"Center of the window", @"window" ] ]) {
+    for (NSArray *item in @[ @[ @"Like Spotlight", @"macos" ], @[ @"Center of the window", @"window" ] ]) {
         NSMenuItem *entry = [[NSMenuItem alloc] initWithTitle:item[0] action:nil keyEquivalent:@""];
         entry.representedObject = item[1];
         [menu addItem:entry];
@@ -731,12 +731,12 @@ static NSMenu *DPCommandBarPositions(void) {
 
 DP_PATCH(DPCommandBar) {
     .key = @"commandBar",
-    .order = 86,
+    .order = 87,
     .title = @"Command bar",
-    .detail = @"Open a new tab as Dia's command bar over the page you're on, instead of as a new tab page, like Arc. Pick something to open it in a new tab, or press Escape or click outside to go back.",
+    .detail = @"Open new tabs as Dia’s command bar over the current page, like Arc. Choose a result to open it in a new tab, or press Escape to go back.",
     .symbol = @"command",
-    .tint = @"systemIndigoColor",
-    .section = @"Tabs",
+    .tint = @"systemOrangeColor",
+    .section = @"Command Bar",
     .classes = DPClasses(DPDiaContentPane, DPDiaNewTabPage, DPDiaAssistantPanel, DPDiaCommandBarSuggestions),
     .choice = @"commandBarPosition",
     .defaultChoice = @"macos",
@@ -750,12 +750,12 @@ DP_PATCH(DPCommandBar) {
 DP_PATCH(DPCommandBarBlur) {
     .key = @"commandBarBlur",
     .defaultOn = YES,
-    .order = 87,
+    .order = 88,
     .title = @"Blur the page behind",
     .detail = @"Blur the page behind the command bar.",
     .symbol = @"drop",
-    .tint = @"systemIndigoColor",
-    .section = @"Tabs",
+    .tint = @"systemOrangeColor",
+    .section = @"Command Bar",
     .requires = @"commandBar",
     .apply = DPApplyCommandBar,
 };
@@ -763,12 +763,12 @@ DP_PATCH(DPCommandBarBlur) {
 DP_PATCH(DPCommandBarDarken) {
     .key = @"commandBarDarken",
     .defaultOn = YES,
-    .order = 88,
+    .order = 89,
     .title = @"Darken the page behind",
     .detail = @"Darken the page behind the command bar.",
     .symbol = @"moon",
-    .tint = @"systemIndigoColor",
-    .section = @"Tabs",
+    .tint = @"systemOrangeColor",
+    .section = @"Command Bar",
     .requires = @"commandBar",
     .apply = DPApplyCommandBar,
 };

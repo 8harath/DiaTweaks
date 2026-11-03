@@ -89,10 +89,10 @@ static NSString *DPVerifyPlainSelectedTab(DPPatch *patch) {
 DP_PATCH(DPPlainSelectedTab) {
     .key = @"plainSelectedTab",
     .order = 46,
-    .title = @"Plain tab while the toolbar hides",
-    .detail = @"Keep the selected tab at the top in the page color, not the site's, while the toolbar is hidden. It takes the site's color again as the toolbar shows.",
+    .title = @"Hide site color in the tab bar",
+    .detail = @"While the toolbar is hidden, show the selected tab in the page color instead of the site's.",
     .symbol = @"paintbrush",
-    .tint = @"systemPinkColor",
+    .tint = @"systemIndigoColor",
     .requires = @"hideToolbar",
     .classes = DPClasses(DPDiaColorFill, DPDiaTabShape, DPDiaTabStrip),
     .install = DPInstallPlainSelectedTab,
