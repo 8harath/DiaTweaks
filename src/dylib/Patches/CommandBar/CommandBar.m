@@ -204,7 +204,10 @@ static void DPShowShade(DPCommandBarOverlay *overlay) {
 // ⌘L's popover resizes its bar through heights that come and go as it opens, so its collapsed height can't be kept.
 - (NSRect)frameForPanelSize:(NSSize)size {
     if (!DPIsKind(self.page, DPDiaPopover)) {
-        if (!self.collapsedHeight) self.collapsedHeight = size.height - DPSuggestionsHeight(self.panel);
+        if (!self.collapsedHeight) {  // From the bar, since a tweak may clip the panel.
+            NSView *bar = DPFindView(self.panel, ^BOOL(NSView *view) { return DPIsKind(view, DPDiaCommandBar); });
+            self.collapsedHeight = NSHeight(bar.frame) - DPSuggestionsHeight(self.panel);
+        }
         return DPBarFrame(self, size, self.collapsedHeight);
     }
     size.width = MIN(652, NSWidth((DPCardIn(self.host) ?: self).bounds) - 28);
@@ -358,8 +361,8 @@ static void DPGoBack(DPCommandBarOverlay *overlay) {
 // ⌘L's bar has 13 point text with 19 points above it, where the new tab page's has 16 and 21. Dia keeps putting back the
 // 19 after sizing the bar by it, so this returns the height the 21 adds.
 static CGFloat DPStyleAsNewTab(NSView *panel) {
-    NSView *bar = DPFindView(panel, ^BOOL(NSView *view) { return DPIsKind(view, DPDiaCommandBarRoot); });
-    NSView *input = DPFindView(panel, ^BOOL(NSView *view) { return DPIsKind(view, DPDiaCommandBarInput); });
+    NSView *bar = DPFindView(panel, ^BOOL(NSView *view) { return DPIsKind(view, DPDiaCommandBar); });
+    NSView *input = DPFindView(panel, ^BOOL(NSView *view) { return DPIsKind(view, DPDiaCommandBarText); });
     NSTextView *text = (NSTextView *)DPFindView(input, ^BOOL(NSView *view) { return [view isKindOfClass:NSTextView.class]; });
     __strong NSFont **font = (__strong NSFont **)DPIvar(input, "font");
     double *top = DPIvar(bar, "layoutConfiguration");
@@ -367,6 +370,8 @@ static CGFloat DPStyleAsNewTab(NSView *panel) {
     if (text.font.pointSize != 16) *font = text.font = [NSFont systemFontOfSize:16];
     CGFloat grown = 21 - *top;
     *top = 21;
+    bar.needsLayout = YES;  // So a tweak measuring it while the panel sizes sees it styled.
+    [bar layoutSubtreeIfNeeded];
     return grown;
 }
 
@@ -471,7 +476,7 @@ static void DPSuggestions_invalidateIntrinsicContentSize(NSView *self, SEL _cmd)
         if (!panel || suggestions.intrinsicContentSize.height < 0 || NSHeight(panel.frame) == want) return;
         panel.frame = [overlay frameForPanelSize:NSMakeSize(NSWidth(panel.frame), want)];
         for (NSView *view = suggestions.superview; view && view != panel; view = view.superview) {
-            view.frame = NSMakeRect(0, 0, NSWidth(view.frame), want);
+            view.frame = NSMakeRect(0, 0, NSWidth(view.frame), NSHeight(panel.frame));
             view.needsLayout = YES;
         }
         [panel layoutSubtreeIfNeeded];
