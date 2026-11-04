@@ -1,7 +1,7 @@
-// Where Dia keeps the views hide patches match: its toolbar, the sidebar's header and footer, and the tab strip.
+// Where Dia keeps the views hide patches match: its toolbar, the sidebar's header and footer, the new tab page, and the tab strip.
 #import "StdPatch/Hide.h"
 
-const char *const DPHideHostClasses[] = {DPDiaToolbar, DPDiaSidebarHeader, DPDiaSidebarFooter, NULL};
+const char *const DPHideHostClasses[] = {DPDiaToolbar, DPDiaSidebarHeader, DPDiaSidebarFooter, DPDiaNewTabPage, NULL};
 static char DPGrownKey;
 
 // Dia centers the profile dots between the footer's buttons, so a hidden button would pull them off center.
