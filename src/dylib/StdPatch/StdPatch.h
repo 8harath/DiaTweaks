@@ -14,7 +14,7 @@ struct DPPatch {
     __unsafe_unretained NSString *title, *detail;
     __unsafe_unretained NSString *hint;  // An optional tip shown under the detail on its Settings page.
     __unsafe_unretained NSString *symbol, *tint;  // The row icon's SF Symbol, then space-separated fallbacks for older macOS, and NSColor class property.
-    __unsafe_unretained NSString *section;  // Its group in Settings.
+    __unsafe_unretained NSString *section;  // Its group in Settings. For an option, its heading on its patch's page, or Options.
     const char *const *classes;  // Dia classes it needs (DPClasses). If one is missing, it stays off and Settings says so.
     const char *const *builtIn;  // Dia classes that mean Dia does this itself (DPClasses). If one exists, it stays off and Settings says so.
     __unsafe_unretained NSString *requires;    // Key of a patch that must be on. Settings lists this one as an option on that patch's page.
@@ -22,7 +22,7 @@ struct DPPatch {
     // A menu on the patch's Settings page, titled by the menu. Items' representedObjects are saved under `choice`.
     __unsafe_unretained NSString *choice, *defaultChoice;
     NSMenu *(*choices)(void);
-    NSArray<NSView *> *(*rows)(void);  // More rows for the Options on its Settings page, such as sliders.
+    NSArray<NSView *> *(*rows)(void);  // More rows for the Options on its Settings page, such as sliders. An option's sit under its switch.
     BOOL (*hides)(NSView *view);  // While on, hides every view this matches in Dia's toolbar, sidebar and tab strip.
     void (*install)(void);        // Runs once at launch whether or not the patch is on; install hooks here.
     void (*apply)(DPPatch *patch);  // Applies a toggle at once. Without it, `progress` eases toward `on` while every patch's `relayout` runs each frame.
@@ -89,6 +89,11 @@ void *DPIvar(id object, const char *name);            // Address of an instance 
 void DPSetHint(NSView *view, NSString *text);
 NSString *DPHintOf(NSView *view);
 void DPShowHint(NSView *view);
+
+// Shortcut.m: a keyboard shortcut saved under `key` as @{keyCode, modifiers, key}, where key is what to show for the
+// key. Until one is recorded it's `fallback`; cleared, it's none. The field records one like Dia's Shortcuts settings.
+NSView *DPShortcutField(NSString *key, NSDictionary *fallback);
+BOOL DPShortcutMatches(NSEvent *event, NSString *key, NSDictionary *fallback);  // NO while any field is recording.
 
 #pragma mark Values
 
