@@ -3,6 +3,8 @@
 #define DPDiaToolbar            "_TtC13NavigationBar17NavigationBarView"
 #define DPDiaBookmarksBar       "_TtC11BookmarkBar15BookmarkBarView"
 #define DPDiaAddressField       "_TtC13NavigationBar16AssistantBarView"
+#define DPDiaLoadingIndicator   "_TtC13NavigationBar20LoadingIndicatorView"  // The glow in the address field while a page loads.
+#define DPDiaReloadIcon         "_TtC13NavigationBar14ReloadIconView"  // Turns into a stop button while the page loads.
 #define DPDiaHoverTracker       "_TtC5ARCUI16ViewHoverTracker"
 #define DPDiaSidebarHeader      "_TtC10TabSidebar17SidebarHeaderView"
 #define DPDiaTrafficLights      "_TtC5ARCUI21WindowStandardButtons"
@@ -28,6 +30,7 @@
 #define DPDiaWindowTint         "_TtC15WindowTreatment31WindowBackgroundOverlayTintView"
 #define DPDiaBrowser            "ArcBrowser"
 #define DPDiaBrowserDelegate    "_TtC3ADK15ChromiumBrowser"
+#define DPDiaWebContents        "ArcWebContents"  // A tab's page, declared in ArcCore's ArcWebContents.h.
 #define DPDiaTabGroupProperties "ArcTabGroupProperties"
 #define DPDiaToasts             "_TtC11DiaToastsV210ToastPanel"  // Dia 1.56 shows "Copied Current URL" with these.
 #define DPDiaTabSwitcher        "_TtC10RecentTabs26RecentTabsWindowController"

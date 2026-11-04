@@ -1,16 +1,20 @@
 #import "Settings.h"
 
+static char DPChoicePatchKey;  // The patch a picker chooses for, when it's an option's.
+
 @implementation DPPageView {
     DPPatch *_patch;
     NSMutableArray<DPPatchSwitch *> *_switches;
     NSTextField *_note;
     NSArray<NSView *> *_rows;
+    NSMutableArray<NSView *> *_optionChoices;  // Shown only while their option is on.
 }
 
 - (instancetype)initWithPatch:(DPPatch *)patch {
     if (!(self = [super initWithFrame:NSZeroRect])) return nil;
     _patch = patch;
     _switches = [NSMutableArray new];
+    _optionChoices = [NSMutableArray new];
     _note = DPLabel(@"", 11, NSFontWeightRegular, NSColor.secondaryLabelColor);
 
     DPPreviewView *preview = [[DPPreviewView alloc] initWithKey:patch->key];
@@ -40,17 +44,14 @@
         if (option->unavailable) [lines addObject:DPLabel(DPWhyDisabled(option), 11, NSFontWeightRegular, NSColor.secondaryLabelColor)];
         NSView *text = DPColumn(lines, 2);
         [options addObject:DPRow(text, [self switchFor:option])];
+        // An option's own choice sits under its switch.
+        if (!option->choices) return;
+        NSView *row = [self choiceRowFor:option];
+        DPSet(row, &DPChoicePatchKey, [NSValue valueWithPointer:option]);
+        [options addObject:row];
+        [self->_optionChoices addObject:row];
     });
-    if (patch->choices) {
-        NSMenu *menu = patch->choices();
-        NSPopUpButton *picker = [NSPopUpButton new];
-        picker.menu = menu;
-        picker.controlSize = NSControlSizeSmall;
-        picker.target = self;
-        picker.action = @selector(choose:);
-        for (NSMenuItem *item in menu.itemArray) if ([item.representedObject isEqual:DPChoice(patch)]) [picker selectItem:item];
-        [options insertObject:DPRow(DPLabel(menu.title, 13, NSFontWeightRegular, NSColor.labelColor), picker) atIndex:0];
-    }
+    if (patch->choices) [options insertObject:[self choiceRowFor:patch] atIndex:0];
     _rows = patch->rows ? patch->rows() : @[];
     for (NSView *view in _rows) {
         NSView *row = DPRow(view, [NSView new]);
@@ -80,8 +81,20 @@
     return toggle.withHiddenIcon;
 }
 
+- (NSView *)choiceRowFor:(DPPatch *)patch {
+    NSMenu *menu = patch->choices();
+    NSPopUpButton *picker = [NSPopUpButton new];
+    picker.menu = menu;
+    picker.controlSize = NSControlSizeSmall;
+    picker.target = self;
+    picker.action = @selector(choose:);
+    DPSet(picker, &DPChoicePatchKey, [NSValue valueWithPointer:patch]);
+    for (NSMenuItem *item in menu.itemArray) if ([item.representedObject isEqual:DPChoice(patch)]) [picker selectItem:item];
+    return DPRow(DPLabel(menu.title, 13, NSFontWeightRegular, NSColor.labelColor), picker);
+}
+
 - (void)choose:(NSPopUpButton *)picker {
-    DPSetChoice(_patch, picker.selectedItem.representedObject);
+    DPSetChoice([DPGet(picker, &DPChoicePatchKey) pointerValue] ?: _patch, picker.selectedItem.representedObject);
 }
 
 - (void)sync {
@@ -92,6 +105,13 @@
             if ([view isKindOfClass:NSControl.class] && !label) ((NSControl *)view).enabled = self->_patch->on;
             return NO;
         });
+    for (NSView *row in _optionChoices) {
+        BOOL shown = ((DPPatch *)[DPGet(row, &DPChoicePatchKey) pointerValue])->on;
+        NSArray<NSView *> *rows = ((NSStackView *)row.superview).arrangedSubviews;
+        NSUInteger i = [rows indexOfObject:row];
+        row.hidden = !shown;
+        if (i != NSNotFound && i > 0) rows[i - 1].hidden = !shown;  // Its separator.
+    }
     _note.stringValue = DPWhyDisabled(_patch) ?: @"";
     _note.hidden = !_note.stringValue.length;
 }
