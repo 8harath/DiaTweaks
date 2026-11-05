@@ -20,6 +20,9 @@ NSString *DPText(id value);
 NSString *DPDomainKey(NSString *urlString);
 NSArray<NSDictionary *> *DPOps(NSArray<NSDictionary *> *tabs, NSArray *groups);
 
+// Registrable.m: eTLD+1 for Merge Subdomains, from a host DPDomainKey returned. A short rule, not the Public Suffix List.
+NSString *DPRegistrableDomain(NSString *host);
+
 // Order.m: where tabs sit, so undo can put them back.
 NSDictionary *DPTabPlaces(NSDictionary<NSNumber *, NSString *> *urls);
 void DPRestorePlaces(id delegate, id browser, NSDictionary *places);
