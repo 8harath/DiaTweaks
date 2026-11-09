@@ -2,6 +2,7 @@
 #import <spawn.h>
 #import <sys/clonefile.h>
 #import <sys/wait.h>
+#import "LaunchServices.h"
 #import "Passwords.h"
 #import "PasswordsParts.h"
 
@@ -22,6 +23,7 @@ static NSString *const kRelayScript =
 NSString *const DPCopyFolder = @"/Applications/.DiaTweaks";
 
 static pid_t gDia;
+static NSString *gApp;
 static NSString *gSessions[DPPasswordsServiceCount];
 
 static BOOL writeExtension(NSString *folder, const DPPasswordsService *service) {
@@ -79,7 +81,8 @@ static pid_t launch(NSString *home) {
     if (pipe(toDia) || pipe(fromDia)) return 0;
     toDia[0] = highFD(toDia[0]), toDia[1] = highFD(toDia[1]), fromDia[0] = highFD(fromDia[0]), fromDia[1] = highFD(fromDia[1]);
 
-    NSString *app = [runnableCopy(home) stringByAppendingPathComponent:@"Contents/MacOS/Dia"];
+    gApp = runnableCopy(home);
+    NSString *app = [gApp stringByAppendingPathComponent:@"Contents/MacOS/Dia"];
     NSString *profile = [@"--user-data-dir=" stringByAppendingString:[data stringByAppendingPathComponent:@"ud"]];
     NSString *load = [@"--load-extension=" stringByAppendingString:[extensions componentsJoinedByString:@","]];
     const char *argv[] = { app.fileSystemRepresentation, profile.UTF8String, load.UTF8String, "--remote-debugging-pipe", "--no-startup-window", "--mute-audio", NULL };
@@ -129,13 +132,6 @@ static NSString *attach(const DPPasswordsService *service) {
     return session && DPDevToolsAsk(@"Runtime.addBinding", @{ @"name" : @"relayOut" }, session) ? session : nil;
 }
 
-// Launch Services would send links and "open Dia" to the windowless copy.
-static void unregister(void) {
-    NSTask *task = [NSTask launchedTaskWithExecutableURL:[NSURL fileURLWithPath:@"/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister"]
-                                               arguments:@[ @"-u", [DPCopyFolder stringByAppendingPathComponent:@"Dia.app"] ] error:nil terminationHandler:nil];
-    [task waitUntilExit];
-}
-
 BOOL DPCopyStart(NSString *home) {
     gDia = launch(home);
     BOOL attached = gDia != 0;
@@ -143,7 +139,7 @@ BOOL DPCopyStart(NSString *home) {
         gSessions[i] = gDia ? attach(&DPPasswordsServices[i]) : nil;
         attached = attached && gSessions[i];
     }
-    unregister();
+    if (gApp) DPForgetApp(gApp);  // or links and "open Dia" go to the windowless copy
     return attached;
 }
 
