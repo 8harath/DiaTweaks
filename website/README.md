@@ -2,6 +2,8 @@
 
 A static, searchable website for the DiaTweaks wiki, with installation and Arc transition guides. No backend, analytics, external fonts, or runtime dependencies. JavaScript adds search and copy buttons; all documentation and navigation work without it.
 
+Typography pairs Newsreader headings with DM Sans for documentation and navigation. The build bundles their Latin variable WOFF2 files from Fontsource and includes each font's license in `dist/fonts/`. Fonts load from the same origin with `font-display: swap`; no font service is contacted by visitors.
+
 ## Local development
 
 Requires Node.js 22 and npm.

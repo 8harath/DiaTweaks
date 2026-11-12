@@ -1,11 +1,13 @@
 import { mkdir, readFile, writeFile, readdir, cp, rm } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { marked } from 'marked';
 import sanitizeHtml from 'sanitize-html';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const out = path.join(root, 'dist');
+const styleHash = createHash('sha256').update(await readFile(path.join(root, 'public/styles.css'))).digest('hex').slice(0, 10);
 const base = (process.env.SITE_BASE || '').replace(/\/$/, '');
 if (base && !/^\/[\w/-]+$/.test(base)) throw new Error('SITE_BASE must be a path such as /DiaTweaks');
 const href = (p = '') => `${base}/${p}`;
@@ -78,7 +80,7 @@ function render(md) {
 }
 const link = (url, title, cls = '') => `<a class="${cls}" href="${url}">${escape(title)}</a>`;
 function header(active = '') {
-  return `<a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="wordmark" href="${href()}" aria-label="DiaTweaks home">dia<span class="brand-divider">/</span>tweaks<span class="brand-dot"></span></a><nav aria-label="Main navigation">${link(href('wiki/'), 'Documentation', active === 'wiki' ? 'active' : '')}${link(href('coming-from-arc/'), 'Coming from Arc', active === 'coming-from-arc' ? 'active' : '')}${link(repo, 'GitHub ↗', 'github-link')}</nav><button class="search-trigger" data-search-open><span>Search the docs</span><kbd>⌘ K</kbd></button></header>`;
+  return `<a class="skip-link" href="#main">Skip to content</a><header class="site-header"><a class="wordmark" href="${href()}" aria-label="DiaTweaks home">dia<span class="brand-divider">/</span>tweaks<span class="brand-dot"></span></a><nav aria-label="Main navigation">${link(href('wiki/'), 'Documentation', active === 'wiki' ? 'active' : '')}${link(href('coming-from-arc/'), 'Coming from Arc', active === 'coming-from-arc' ? 'active' : '')}${link(repo, 'GitHub ↗', 'github-link')}</nav><button class="search-trigger" data-search-open aria-label="Search documentation"><span>Search the docs</span><kbd>⌘ K</kbd></button></header>`;
 }
 function footer() {
   return `<footer class="site-footer"><div><a class="wordmark" href="${href()}">dia<span class="brand-divider">/</span>tweaks</a><p>A community project. A browser that feels like yours.</p><small>Unofficial. Not affiliated with The Browser Company.</small></div><div>${link(repo, 'Source code ↗')}${link(`${repo}/wiki`, 'Original wiki ↗')}${link(href('contributing/'), 'Contribute')}</div></footer>`;
@@ -87,7 +89,7 @@ function search() {
   return `<dialog class="search-dialog" aria-labelledby="search-title"><div class="search-top"><h2 id="search-title">Find your tweak.</h2><button data-search-close aria-label="Close search">Esc</button></div><label class="sr-only" for="search-input">Search documentation</label><input id="search-input" type="search" placeholder="Try “Peek”, “toolbar”, or “passwords”…" autocomplete="off"><p id="search-status" role="status">Search all guides and wiki pages.</p><ul id="search-results"></ul><div class="search-help">Search by feature, question, or command. <span>↵ open a result · Esc close</span></div></dialog>`;
 }
 function shell(title, content, cls = '', active = '') {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escape(title === 'Home' ? 'Make Dia feel like home. Community guides, Arc-inspired tweaks, and the complete DiaTweaks wiki.' : `${title} — DiaTweaks documentation, options, and instructions.`)}"><meta name="theme-color" content="#f8f8f2"><title>${title === 'Home' ? 'DiaTweaks — Make Dia feel like home.' : `${escape(title)} · DiaTweaks`}</title><link rel="icon" href="${href('favicon.svg')}" type="image/svg+xml"><link rel="stylesheet" href="${href('styles.css')}"><script defer src="${href('app.js')}" data-base="${base}"></script></head><body class="${cls}">${header(active)}${content}${footer()}${search()}</body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="${escape(title === 'Home' ? 'Make Dia feel like home. Community guides, Arc-inspired tweaks, and the complete DiaTweaks wiki.' : `${title} — DiaTweaks documentation, options, and instructions.`)}"><meta name="theme-color" content="#f8f8f2"><title>${title === 'Home' ? 'DiaTweaks — Make Dia feel like home.' : `${escape(title)} · DiaTweaks`}</title><link rel="icon" href="${href('favicon.svg')}" type="image/svg+xml"><link rel="stylesheet" href="${href(`styles.css?v=${styleHash}`)}"><script defer src="${href('app.js')}" data-base="${base}"></script></head><body class="${cls}">${header(active)}${content}${footer()}${search()}</body></html>`;
 }
 function sidebar(current) {
   const fixed = `<div class="sidebar-start"><p class="nav-label">Start here</p>${guides.filter(g => g.id !== 'contributing').map(g => link(g.url, g.label, current.id === g.id ? 'current' : '')).join('')}</div>`;
@@ -101,6 +103,12 @@ async function emit(route, html) {
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await cp(path.join(root, 'public'), out, { recursive: true });
+await mkdir(path.join(out, 'fonts'), { recursive: true });
+for (const family of ['newsreader', 'dm-sans']) {
+  const packageDir = path.join(root, 'node_modules/@fontsource-variable', family);
+  await cp(path.join(packageDir, 'files', `${family}-latin-wght-normal.woff2`), path.join(out, 'fonts', `${family}.woff2`));
+  await cp(path.join(packageDir, 'LICENSE'), path.join(out, 'fonts', `${family}-LICENSE.txt`));
+}
 
 const descriptions = {
   'Page': 'More room for what you’re reading.', 'Toolbar': 'A quieter frame around the web.', 'Sidebar & Tab Bar': 'Your tabs, with a little less clutter.',
