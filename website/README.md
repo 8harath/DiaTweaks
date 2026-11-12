@@ -36,7 +36,9 @@ Commit the changed content, media, and source metadata together. Do not edit mir
 
 ## GitHub Pages
 
-In the repository's **Settings → Pages**, select **GitHub Actions** as the publishing source. The `Documentation website` workflow builds and checks changes in pull requests and deploys pushes to `main` or `codex/documentation-website`. The second branch allows the contributor's fork to host a reviewable preview without changing its main branch. The `github-pages` environment must permit the deployment branch; set this in Settings → Environments if deployment is restricted to main.
+In the repository's **Settings → Pages**, select **GitHub Actions** as the publishing source. The `Documentation website` workflow builds and checks changes in pull requests and deploys pushes to `main`. The `github-pages` environment must permit the deployment branch; set this in Settings → Environments if deployment is restricted to main.
+
+The contributor's fork can host a preview before merging: build with the repository base, publish the contents of `dist/` to a separate `gh-pages` branch, and select **Deploy from a branch → gh-pages → / (root)** in Pages settings. This preserves the fork's main branch. Switch to the Actions publishing source after merging the website workflow into main for automatic deployments.
 
 The workflow builds with `SITE_BASE=/<repository-name>`, so assets, full-text search, and deep links work at `https://<owner>.github.io/<repository-name>/`. For a custom domain at the root, set `SITE_BASE` to an empty string instead.
 

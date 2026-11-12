@@ -2,7 +2,7 @@ name: Documentation website
 
 on:
   push:
-    branches: [main, codex/documentation-website]
+    branches: [main]
     paths: ['website/**', 'README.md', '.github/workflows/website.yml']
   pull_request:
     paths: ['website/**', 'README.md', '.github/workflows/website.yml']
