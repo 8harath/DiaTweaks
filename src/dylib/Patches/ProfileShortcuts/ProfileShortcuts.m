@@ -3,9 +3,12 @@
 extern DPPatch DPProfileShortcuts;
 static char DPSwappedKey;  // @[Dia's modifiers, ours]
 
+static BOOL DPIsDigit(NSString *text) {
+    return text.length == 1 && [text characterAtIndex:0] >= '1' && [text characterAtIndex:0] <= '9';
+}
+
 static BOOL DPIsDigitShortcut(NSMenuItem *item, NSEventModifierFlags mods) {
-    NSString *key = item.keyEquivalent;
-    return key.length == 1 && [key characterAtIndex:0] >= '1' && [key characterAtIndex:0] <= '9' && item.keyEquivalentModifierMask == mods;
+    return DPIsDigit(item.keyEquivalent) && item.keyEquivalentModifierMask == mods;
 }
 
 static NSMenuItem *DPFindItem(NSMenu *menu, BOOL (^match)(NSMenuItem *item)) {
@@ -45,15 +48,34 @@ static void DPApplyProfileShortcuts(DPPatch *patch) {
     });
 }
 
+// The number a menu takes this ⌘ key press for: the character the key types. Layouts that type digits only with ⇧ (French,
+// Belgian AZERTY) make ⌘⇧& the "⌘1" of the menu, and ⌘& alone is not. Where the key types no digit but the layout gives ⌘ one
+// (Arabic, Thai), the ⌘ layer's digit counts.
+static NSString *DPCommandDigit(NSEvent *event) {
+    NSEventModifierFlags mods = event.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagShift);
+    BOOL shifted = mods == (NSEventModifierFlagCommand | NSEventModifierFlagShift) && !(event.modifierFlags & NSEventModifierFlagNumericPad);
+    if (mods != NSEventModifierFlagCommand && !shifted) return nil;
+    NSString *typed = event.charactersIgnoringModifiers;
+    if (!shifted && !DPIsDigit(typed)) typed = event.characters;
+    return DPIsDigit(typed) ? typed : nil;
+}
+
+static NSMenuItem *DPProfileItem(NSString *digit) {
+    return DPFindItem(NSApp.mainMenu, ^BOOL(NSMenuItem *candidate) {
+        return DPGet(candidate, &DPSwappedKey) && DPIsDigitShortcut(candidate, NSEventModifierFlagCommand) && [candidate.keyEquivalent isEqualToString:digit];
+    });
+}
+
 // A focused page takes ⌘ and a number before the menu bar sees it.
 static void DPApplication_sendEvent(NSApplication *self, SEL _cmd, NSEvent *event) {
-    NSEventModifierFlags mods = event.modifierFlags & (NSEventModifierFlagCommand | NSEventModifierFlagControl | NSEventModifierFlagOption | NSEventModifierFlagShift);
-    NSMenuItem *item = DPProfileShortcuts.on && event.type == NSEventTypeKeyDown && mods == NSEventModifierFlagCommand
-        ? DPFindItem(NSApp.mainMenu, ^BOOL(NSMenuItem *candidate) {
-              return DPGet(candidate, &DPSwappedKey) && DPIsDigitShortcut(candidate, NSEventModifierFlagCommand) && [candidate.keyEquivalent isEqualToString:event.charactersIgnoringModifiers];
-          })
-        : nil;
-    if (!item.enabled) return DPCallOriginal(DPApplication_sendEvent, self, event);
+    // A recording field has to see the key, and a ⌘ and number no profile item can act on is left to Dia and the page.
+    NSString *digit = DPProfileShortcuts.on && event.type == NSEventTypeKeyDown && !DPShortcutRecording() ? DPCommandDigit(event) : nil;
+    NSMenuItem *item = digit ? DPProfileItem(digit) : nil;
+    // Performing an item doesn't validate it, so its enabled state is only as new as the menu's last update. The update can
+    // rebuild the menu's items, so the item is looked up again after it.
+    [item.menu update];
+    if (item) item = DPProfileItem(digit);
+    if (!item.enabled || item.hiddenOrHasHiddenAncestor || !item.action) return DPCallOriginal(DPApplication_sendEvent, self, event);
     [item.menu performActionForItemAtIndex:[item.menu indexOfItem:item]];
 }
 
